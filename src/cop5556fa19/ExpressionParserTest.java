@@ -58,7 +58,7 @@ class ExpressionParserTest {
 	Exp parseAndShow(String input) throws Exception {
 		show("parser input:\n" + input); // Display the input
 		Reader r = new StringReader(input);
-		Scanner scanner = new Scanner(r, false); // Create a Scanner and initialize it
+		Scanner scanner = new Scanner(r); // Create a Scanner and initialize it
 		ExpressionParser parser = new ExpressionParser(scanner);  // Create a parser
 		Exp e = parser.exp(); // Parse and expression
 		show("e=" + e);  //Show the resulting AST
@@ -88,7 +88,7 @@ class ExpressionParserTest {
 		String input = "\"string\"";
 		Exp e = parseAndShow(input);
 		assertEquals(ExpString.class, e.getClass());
-		assertEquals("string", ((ExpString) e).v);
+		assertEquals("\"string\"", ((ExpString) e).v);
 	}
 
 	@Test
@@ -139,9 +139,9 @@ class ExpressionParserTest {
 		String input = "\"concat\" .. \"is\"..\"right associative\"";
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
-				Expressions.makeExpString("concat")
+				Expressions.makeExpString("\"concat\"")
 				, DOTDOT
-				, Expressions.makeBinary("is",DOTDOT,"right associative"));
+				, Expressions.makeBinary("\"is\"",DOTDOT,"\"right associative\""));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 	}
@@ -152,10 +152,10 @@ class ExpressionParserTest {
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeBinary(
-						Expressions.makeExpString("minus")
+						Expressions.makeExpString("\"minus\"")
 				, OP_MINUS
-				, Expressions.makeExpString("is")), OP_MINUS, 
-				Expressions.makeExpString("left associative"));
+				, Expressions.makeExpString("\"is\"")), OP_MINUS, 
+				Expressions.makeExpString("\"left associative\""));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		

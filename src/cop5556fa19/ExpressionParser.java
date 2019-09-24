@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.print.DocFlavor.STRING;
+
 import cop5556fa19.AST.Block;
 import cop5556fa19.AST.Exp;
 import cop5556fa19.AST.ExpBinary;
@@ -46,6 +48,7 @@ public class ExpressionParser {
 	class SyntaxException extends Exception {
 		Token t;
 		
+		
 		public SyntaxException(Token t, String message) {
 			super(t.line + ":" + t.pos + " " + message);
 		}
@@ -53,7 +56,7 @@ public class ExpressionParser {
 	
 	final Scanner scanner;
 	Token t;  //invariant:  this is the next token
-
+	Exp e10;
 
 	ExpressionParser(Scanner s) throws Exception {
 		this.scanner = s;
@@ -63,7 +66,112 @@ public class ExpressionParser {
 
 	Exp exp() throws Exception {
 		Token first = t;
-		Exp e0 = andExp();
+		
+		Exp e0=null;
+		switch(first.kind) {
+		case KW_true:{
+			e10 = new ExpTrue(t);
+			consume();
+			e0=exp();
+			break;
+		}
+			
+		case KW_false:{
+			e10 = new ExpFalse(t);
+			consume();
+			e0=exp();
+			break;
+		}
+		case INTLIT:{
+			e10 = new ExpInt(t);
+			consume();
+			if(t.kind.equals(OP_TIMES) || t.kind.equals(OP_DIV)) {
+				e0 = createMultiplyStringLit();
+			}
+			else if(t.kind.equals(OP_PLUS)|| t.kind.equals(OP_MINUS) || t.kind.equals(OP_MOD) || t.kind.equals(OP_DIVDIV) ||t.kind.equals(DOTDOT) || t.kind.equals(DOTDOTDOT) ) {
+			e0=createaddStringLit();
+			}else if(t.kind.equals(EOF)) {
+				e0  = e10;
+			}else {
+				e0 = exp();
+			}
+			//e0=exp();
+			break;
+		}
+		case STRINGLIT:{
+			e10 = new ExpString(t);
+			consume();
+			if(t.kind.equals(OP_TIMES) || t.kind.equals(OP_DIV)) {
+				e0 = createMultiplyStringLit();
+			}
+			else if(t.kind.equals(OP_PLUS)|| t.kind.equals(OP_MINUS) || t.kind.equals(OP_MOD) || t.kind.equals(OP_DIVDIV) ||t.kind.equals(DOTDOT) || t.kind.equals(DOTDOTDOT) ) {
+			e10=createaddStringLit();
+			}
+			e0 = exp();
+			
+			//e0=exp();
+			break;
+		}
+		case DOTDOTDOT:{
+			e10 = new ExpVarArgs(t);
+			consume();
+			e0=exp();
+			break;
+		}
+		case NAME:{
+			e10 = new ExpName(t);
+			consume();
+			if(t.kind.equals(ASSIGN)) {
+				consume();
+				e0 = exp();
+			}
+			else {
+				e0=exp();
+			}
+			break;
+		}
+		case OP_MINUS:{
+			e10 = new ExpUnary(consume(), OP_MINUS, exp());
+			consume();
+			e0=exp();
+			break;
+		}
+		case KW_not :{
+			e10 = new ExpUnary(t, KW_not, e10);
+			consume();
+			e0 = exp();
+			break;
+		}
+		case  OP_HASH :{
+			e10 = new ExpUnary(t, OP_MINUS, e10);
+			consume();
+			e0 = exp();
+			break;
+		}
+		case LPAREN:{
+			match(LPAREN);
+			e0 = exp();
+			break;
+		}
+		case RPAREN:{
+			match(RPAREN);
+			e0 = exp();
+			break;
+		}
+		case BIT_XOR:{
+			e10 = new ExpUnary(t, OP_MINUS, e10);
+			consume();
+			e0 = exp();
+			break;
+		}
+		case EOF:{
+			e0 = e10;
+			break;
+		}
+		case OP_TIMES:{
+			throw new SyntaxException(t, "This OP_TIMES(*) token is not valid at this position");
+		}
+		}		//Exp e0 = andExp();
 		while (isKind(KW_or)) {
 			Token op = consume();
 			Exp e1 = andExp();
@@ -73,6 +181,70 @@ public class ExpressionParser {
 	}
 
 	
+private Exp createMultiplyStringLit() throws Exception{
+	Exp e0=null;
+	switch(t.kind) {
+	case OP_TIMES:{
+		match(OP_PLUS);
+		e0 = new ExpBinary(e10.firstToken,e10,OP_PLUS,exp());
+		break;
+	}
+	case OP_DIV:{
+		match(OP_MINUS);
+		e10 = new ExpBinary(e10.firstToken,e10,OP_MINUS,exp());
+		break;
+	}
+	case EOF:{
+		e0 = e10;
+		break;
+	}
+	default:{
+		if(t.kind.equals(STRINGLIT)) {
+			e0 = new ExpString(t);
+		}else if(t.kind.equals(INTLIT)) {
+			e0 = new ExpInt(t);
+		}
+	}
+		
+	}
+	
+	return e0;
+}
+
+
+private Exp createaddStringLit() throws Exception {
+	Exp e0=null;
+		switch(t.kind) {
+		case OP_PLUS:{
+			match(OP_PLUS);
+			e0 = new ExpBinary(e10.firstToken,e10,OP_PLUS,createMultiplyStringLit());
+			break;
+		}
+		case OP_MINUS:{
+			match(OP_MINUS);
+			e0= new ExpBinary(e10.firstToken,e10,OP_MINUS,createMultiplyStringLit());
+			break;
+		}
+		case DOTDOTDOT:{
+			match(DOTDOTDOT);
+			e0 = new ExpBinary(e10.firstToken,e10,DOTDOTDOT,exp());
+			break;
+		}
+		case DOTDOT:{
+			match(DOTDOT);
+			e0 = new ExpBinary(e10.firstToken,e10,DOTDOT,exp());
+			break;
+		}
+		case EOF:{
+			e0 = e10;
+			break;
+		}
+		}
+		
+		return e0;
+	}
+
+
 private Exp andExp() throws Exception{
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("andExp");  //I find this is a more useful placeholder than returning null.
