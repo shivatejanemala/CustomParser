@@ -148,17 +148,29 @@ class ExpressionParserTest {
 	
 	@Test
 	void testLeftAssoc() throws Exception {
-		String input = "\"minus\" - \"is\" - \"left associative\"";
+		String input = "\"minus\" + \"is\" - \"left associative\"";
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeBinary(
 						Expressions.makeExpString("\"minus\"")
-				, OP_MINUS
+				, OP_PLUS
 				, Expressions.makeExpString("\"is\"")), OP_MINUS, 
 				Expressions.makeExpString("\"left associative\""));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		
 	}
-
+	
+	@Test
+	void testOpPrecedence() throws Exception {
+		String input = "\"a\"|\"b\"";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+						Expressions.makeExpString("\"a\"")
+				, BIT_OR
+				, Expressions.makeExpString("\"b\""));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+	}
 }
