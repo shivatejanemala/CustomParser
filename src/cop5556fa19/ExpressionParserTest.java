@@ -88,7 +88,7 @@ class ExpressionParserTest {
 		String input = "\"string\"";
 		Exp e = parseAndShow(input);
 		assertEquals(ExpString.class, e.getClass());
-		assertEquals("\"string\"", ((ExpString) e).v);
+		assertEquals("string", ((ExpString) e).v);
 	}
 
 	@Test
@@ -152,10 +152,10 @@ class ExpressionParserTest {
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeBinary(
-						Expressions.makeExpString("\"minus\"")
+						Expressions.makeExpString("minus")
 				, OP_PLUS
-				, Expressions.makeExpString("\"is\"")), OP_MINUS, 
-				Expressions.makeExpString("\"left associative\""));
+				, Expressions.makeExpString("is")), OP_MINUS, 
+				Expressions.makeExpString("left associative"));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		
@@ -166,9 +166,45 @@ class ExpressionParserTest {
 		String input = "\"a\"|\"b\"";
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
-						Expressions.makeExpString("\"a\"")
+						Expressions.makeExpString("a")
 				, BIT_OR
-				, Expressions.makeExpString("\"b\""));
+				, Expressions.makeExpString("b"));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+	}
+	
+	@Test
+	void testParenthesisPrecedence() throws Exception {
+		String input = "(1+2*9)+(3-4)";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary( Expressions.makeBinary(Expressions.makeInt(1),OP_PLUS,Expressions.makeBinary(Expressions.makeInt(2), OP_TIMES, Expressions.makeInt(9)))
+						, OP_PLUS
+				, Expressions.makeBinary(Expressions.makeInt(3),OP_MINUS,Expressions.makeInt(4)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+	}
+	
+	@Test
+	void testPowerPrecedence() throws Exception {
+		String input = "1^2^3+1";
+		Exp e = parseAndShow(input);
+		Exp expected =Expressions.makeBinary(Expressions.makeBinary( Expressions.makeInt(1)
+				, OP_POW
+		, Expressions.makeBinary(Expressions.makeInt(2),OP_POW,Expressions.makeInt(3))),OP_PLUS,Expressions.makeInt(1));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+	}
+	
+	@Test
+	void testfnparse() throws Exception {
+		String input = "function (as,bs,...)end";
+		Exp e = parseAndShow(input);
+		Exp expected =Expressions.makeBinary(Expressions.makeBinary( Expressions.makeInt(1)
+				, OP_POW
+		, Expressions.makeBinary(Expressions.makeInt(2),OP_POW,Expressions.makeInt(3))),OP_PLUS,Expressions.makeInt(1));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		

@@ -194,7 +194,7 @@ private Exp andExp() throws Exception{
 		Exp e0 = term();
 		while(isKind(OP_POW) ) {
 			Token op = consume();
-			Exp e1 = term();
+			Exp e1 = exp();
 			e0 = new ExpBinary(first,e0,op,e1);
 		}
 		return e0;
@@ -224,11 +224,9 @@ private Exp andExp() throws Exception{
 		else if(isKind(LPAREN)) {
 			match(LPAREN);
 			e0 = exp();
-		}
-		else if(isKind(RPAREN)) {
 			match(RPAREN);
-			e0 = exp();
 		}
+		
 		else if(isKind(KW_not)) {
 			Token op = consume();
 			e0 = new ExpUnary(op,KW_not,exp());
@@ -242,10 +240,128 @@ private Exp andExp() throws Exception{
 		}else if (isKind(OP_MINUS)) {
 			Token op = consume();
 			e0 = new ExpUnary(op,OP_MINUS,exp());
+		}else if (isKind(DOTDOTDOT)) {
+			Token op = consume();
+			e0 = new ExpVarArgs(t);
+		}else if(isKind(KW_function)) {
+			match(KW_function);
+			e0	= new ExpFunction(t, fbody());
+		}
+		else if(isKind(LCURLY)) {
+			match(LCURLY);
+			e0 = new ExpTable(t, fieldlistexp());
+			match(RCURLY);
+		}
+		else {
+			throw new SyntaxException(t, "Invalid token found");	
 		}
 		return e0;
 	}
 
+	private List<Field> fieldlistexp() throws Exception{
+		Field e0= null;
+		Field e1= null;
+		e0 = fieldexp();
+		List<Field> fieldlist = new ArrayList<Field>();
+		fieldlist.add(e0);
+		while(isKind(COMMA)|| isKind(SEMI)) {
+			consume();
+			e1 = fieldexp();
+			fieldlist.add(e1);
+		}
+		return fieldlist;
+	}
+	
+	private Field fieldexp() throws Exception{
+		Exp e0= null;
+		Exp e1= null;
+		Field fieldexp = null;
+		if(isKind(Kind.LSQUARE)) {
+			match(LSQUARE);
+			e0 = exp();
+			match(RSQUARE);
+			match(ASSIGN);
+			e1 = exp();
+			fieldexp  = new FieldExpKey(t, e0, e1);
+		}
+		else if(isKind(NAME)) {
+			t = match(NAME);
+			match(ASSIGN);
+			e0 = exp();
+		FieldNameKey f = new FieldNameKey(t, new Name(t, t.text), e0);			
+		}
+		else {
+			fieldexp = new FieldImplicitKey(t,exp());
+		}
+		return fieldexp;
+	}
+
+
+	private FuncBody fbody() throws Exception{
+		FuncBody fbody = null;
+		Token first = t;
+		if(isKind(LPAREN)) {
+			match(LPAREN);
+			fbody = new FuncBody(t, parlList(), block());
+			match(RPAREN);
+		}
+		else {
+			throw new SyntaxException(t,"wrong tokens found");
+		}
+		return fbody;
+	}
+	
+	private ParList parlList() throws Exception{
+		ParList parlList = null;
+		List<Name> expList = new ArrayList<Name>();
+		Token first = t;
+		boolean hasVarArgs = false;
+		if(isKind(DOTDOTDOT)) {
+			match(DOTDOTDOT);
+			parlList = new ParList(t, null, true);
+					}
+		else if(isKind(NAME)) {
+			expList.add(new Name(t,t.text));
+			consume();
+			while(isKind(COMMA)) {
+				match(COMMA);
+				if(isKind(NAME)) {
+					expList.add(new Name(t,t.text));
+					consume();
+				}
+				else if(isKind(DOTDOTDOT)) {
+					hasVarArgs = true;
+					parlList = new ParList(t, expList, hasVarArgs);
+					consume();
+					}
+			}
+			
+			}
+			
+			
+		
+		return parlList;
+	}
+
+	/*private List<Name> nameList() throws Exception{
+		List<Name>expList = new ArrayList<>();
+		boolean hasVarArgs = false;
+		if(isKind(NAME)) {
+			expList.add(new Name(t,t.text));
+			consume();
+		}
+		while(isKind(COMMA)) {
+			match()
+		expList.add(new Name(t,t.text));
+		consume();
+			
+			else {
+				throw new SyntaxException(t,"Missing comma token here");
+			}
+		}
+		
+		return expList;
+	}*/
 
 	private Block block() {
 		return new Block(null);  //this is OK for Assignment 2
