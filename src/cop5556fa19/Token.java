@@ -13,8 +13,6 @@
 
 package cop5556fa19;
 
-import cop5556fa19.Token.Kind;
-
 public class Token {
 	public enum Kind {
 		START,
