@@ -139,9 +139,9 @@ class ExpressionParserTest {
 		String input = "\"concat\" .. \"is\"..\"right associative\"";
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
-				Expressions.makeExpString("\"concat\"")
+				Expressions.makeExpString("concat")
 				, DOTDOT
-				, Expressions.makeBinary("\"is\"",DOTDOT,"\"right associative\""));
+				, Expressions.makeBinary("is",DOTDOT,"right associative"));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 	}
@@ -187,12 +187,36 @@ class ExpressionParserTest {
 	}
 	
 	@Test
-	void testPowerPrecedence() throws Exception {
+	void testPowerPrecedence1() throws Exception {
 		String input = "1^2^3+1";
 		Exp e = parseAndShow(input);
 		Exp expected =Expressions.makeBinary(Expressions.makeBinary( Expressions.makeInt(1)
 				, OP_POW
 		, Expressions.makeBinary(Expressions.makeInt(2),OP_POW,Expressions.makeInt(3))),OP_PLUS,Expressions.makeInt(1));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+	}
+	
+	@Test
+	void testPowerPrecedence2() throws Exception {
+		String input = "1^2^3^4+5";
+		Exp e = parseAndShow(input);
+		Exp expected =Expressions.makeBinary(Expressions.makeBinary( Expressions.makeInt(1)
+				, OP_POW
+		, Expressions.makeBinary(Expressions.makeInt(2),OP_POW,Expressions.makeBinary(Expressions.makeInt(3), OP_POW,Expressions.makeInt(4)))),OP_PLUS,Expressions.makeInt(5));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+	}
+	
+	@Test
+	void testPowerPrecedence3() throws Exception {
+		String input = "1^2+1";
+		Exp e = parseAndShow(input);
+		Exp expected =Expressions.makeBinary(Expressions.makeBinary( Expressions.makeInt(1)
+				, OP_POW
+		, Expressions.makeInt(2)),OP_PLUS,Expressions.makeInt(1));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		

@@ -30,6 +30,7 @@ import cop5556fa19.AST.ExpTable;
 import cop5556fa19.AST.ExpTrue;
 import cop5556fa19.AST.ExpUnary;
 import cop5556fa19.AST.ExpVarArgs;
+import cop5556fa19.AST.Expressions;
 import cop5556fa19.AST.Field;
 import cop5556fa19.AST.FieldExpKey;
 import cop5556fa19.AST.FieldImplicitKey;
@@ -150,7 +151,14 @@ private Exp andExp() throws Exception{
 		while (isKind(DOTDOT)) {
 			Token op = consume();
 			Exp e1 = addExp();
-			e0 = new ExpBinary(first, e0, op, e1);
+			if(isKind(DOTDOT)) {
+				consume();
+				e0 = new ExpBinary(first,e0,DOTDOT,Expressions.makeBinary(e1, DOTDOT, dotdotExp()));
+			}
+			else {
+				e1 = new ExpBinary(first,e0,DOTDOT,e1);
+						return e1;
+			}
 		}
 			//throw new UnsupportedOperationException("andExp");  //I find this is a more useful placeholder than returning null.
 		return e0;
@@ -194,8 +202,15 @@ private Exp andExp() throws Exception{
 		Exp e0 = term();
 		while(isKind(OP_POW) ) {
 			Token op = consume();
-			Exp e1 = exp();
-			e0 = new ExpBinary(first,e0,op,e1);
+			Exp e1 = term();
+			if(isKind(OP_POW)) {
+				consume();
+				e0 = new ExpBinary(first,e0,op,Expressions.makeBinary(e1, OP_POW, powExp()));
+			}
+			else {
+			e1 = new ExpBinary(first,e0,op,e1);
+			return e1;
+			}
 		}
 		return e0;
 		}
