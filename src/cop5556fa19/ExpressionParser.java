@@ -333,7 +333,7 @@ private Exp andExp() throws Exception{
 		boolean hasVarArgs = false;
 		if(isKind(DOTDOTDOT)) {
 			match(DOTDOTDOT);
-			parlList = new ParList(t, null, true);
+			parlList = new ParList(t, expList, true);
 					}
 		else if(isKind(NAME)) {
 			expList.add(new Name(t,t.text));
